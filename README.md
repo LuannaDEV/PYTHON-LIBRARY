@@ -1,10 +1,10 @@
-# 📚 Python Library API
+#  Python Library API
 
 API REST para gerenciamento de catálogo de livros, desenvolvida com FastAPI e containerizada com Docker.
 
 ---
 
-## 🔄 Fluxo Completo — Docker + Aplicação
+##  Fluxo Completo — Docker + Aplicação
 
 ### Fase 1 — Build da Imagem
 
@@ -64,7 +64,7 @@ Retorna resposta JSON ao cliente
 
 ---
 
-## 🛠️ Tecnologias
+##  Tecnologias
 
 - **Python 3.12+**
 - **FastAPI >= 0.134.0** — framework web
@@ -77,7 +77,7 @@ Retorna resposta JSON ao cliente
 
 ---
 
-## ✅ Requisitos para rodar o projeto
+##  Requisitos para rodar o projeto
 
 ### Com Docker (recomendado)
 - [Docker Desktop](https://www.docker.com/get-started) (já inclui o Docker Compose)
@@ -96,7 +96,7 @@ docker --version   # precisa estar instalado
 
 ---
 
-## 🚀 Como rodar em outra máquina
+##  Como rodar em outra máquina
 
 ### Com Docker (recomendado)
 
@@ -155,7 +155,7 @@ poetry run uvicorn main:app --host 0.0.0.0 --port 8000
 
 ---
 
-## 🌐 Acessar a API
+##  Acessar a API
 
 | O que | Endereço |
 |---|---|
@@ -164,7 +164,7 @@ poetry run uvicorn main:app --host 0.0.0.0 --port 8000
 
 ---
 
-## 🔑 Autenticação
+##  Autenticação
 
 Todos os endpoints exigem **HTTP Basic Auth**:
 
@@ -175,7 +175,7 @@ Todos os endpoints exigem **HTTP Basic Auth**:
 
 ---
 
-## 📦 Endpoints disponíveis
+##  Endpoints disponíveis
 
 | Método | Rota | Descrição |
 |---|---|---|
@@ -186,7 +186,7 @@ Todos os endpoints exigem **HTTP Basic Auth**:
 
 ---
 
-## 🛑 Como parar
+##  Como parar
 
 ```bash
 docker compose down
