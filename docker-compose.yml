@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  web:
+    build: .        
+    container_name: livros.api
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    ports:
+      - '8000:8000'
+    environment:
+      - DATABASE_URL=sqlite:///./livros.db
+      - MEU_USUARIO=admin
+      - MINHA_SENHA=admin
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - livros_data:/app/data
+
+volumes:
+  livros_data:

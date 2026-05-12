@@ -1,0 +1,42 @@
+from fastapi import FastAPI, HTTPException
+
+
+app = FastAPI()
+ 
+ 
+meus_carros = {
+    5: {"modelo_carro": "Honda", "cor_carro": "Desconhecido", "ano_carro": 2010}
+}
+
+
+@app.post("/adiciona")
+def post_livros(id_carro: int, modelo_carro: str, cor_carro:str, ano_carro: int):
+    if id_carro in meus_carros:
+        raise HTTPException(status_code=400, detail = "Este livro ja existe")
+    else:
+        meus_carros[id_carro] = {"modelo_carro": modelo_carro, "cor_carro": cor_carro,"ano_carro": ano_carro }
+        return("mensagem": "O carro foi adicionado")  
+
+@app.put("/atualiza")
+def put_carro(id_carro: int, modelo_carro: str, cor_carro:str, ano_carro: int):
+    if id_carro not in meus_carros:
+        raise HTTPException(status_code=404, detail= "Este carro nao existe ")
+    else:
+         meus_carros[id_carro] = {"modelo_carro": modelo_carro, "cor_carro": cor_carro, "ano_carro": ano_carro}
+         return {"mensagem": "O carro foi atualizado"}
+         
+@app.get("/procura")
+def get_carro(id_carro: int):
+    if id_carro not in meus_carros:
+        raise HTTPException(status_code=404, detail= "Este carro nao existe!")
+    else:
+        return  meus_carros[id_carro] 
+        
+    
+@app.delete("/deleta")
+def delete_carro(id_carro: int):
+    if id_carro not in meus_carros:
+        raise HTTPException(status_code=404, detail= "Este carro nao existe!")
+    else:
+        del meus_carros[id_carro] 
+        return {"mensagem": "O carro foi deletado"}
