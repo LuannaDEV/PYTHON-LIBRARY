@@ -2,14 +2,22 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ] 
+    branches: [ "main" ]
+
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
 
     steps:
       - name: Baixar codigo do repositorio
-        uses: actions/checkout@v4 
+        uses: actions/checkout@v4
+
+      - name: Criar arquivo .env
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "MEU_USUARIO=${{ secrets.MEU_USUARIO }}" >> .env
+          echo "MINHA_SENHA=${{ secrets.MINHA_SENHA }}" >> .env
+          echo "PYTHONUNBUFFERED=1" >> .env
 
       - name: Build da imagem docker
         run: docker build -t livros-api:latest .
