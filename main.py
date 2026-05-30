@@ -5,6 +5,7 @@ import secrets
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy import create_engine, Column, Integer, String, asc, desc
 import os
+import asyncio
 
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -28,6 +29,34 @@ MINHA_SENHA = os.getenv("MINHA_SENHA")
 security = HTTPBasic()
 
 
+async def chamadas_externas1():
+    await asyncio.sleep(2)
+    return "Resultado chamada 1"
+
+async def chamadas_externas2():
+    await asyncio.sleep(2)
+    return "Resultado chamada 2"
+
+async def chamadas_externas3():
+    await asyncio.sleep(2)
+    return "Resultado chamada 3"
+
+@app.get("/chamadas-externas")
+async def chamadas():
+    tarefa1 = asyncio.create_task(chamadas_externas1)
+    tarefa2 = asyncio.create_task(chamadas_externas2)
+    tarefa3 = asyncio.create_task(chamadas_externas3)
+    
+    resultado1 = await tarefa1
+    resultado2 = await tarefa2
+    resultado3 = await tarefa3
+    
+    return {
+        "mensagem": "Todas as chamadas nas APIS foram concluidas com sucesso"
+        "resultado": [resultado1, resultado2, resultado3]
+        
+    }
+    
 def autenticar_meu_usuario(credentials: HTTPBasicCredentials = Depends(security)):
     is_username_correct = secrets.compare_digest(credentials.username, MEU_USUARIO)
     is_password_correct = secrets.compare_digest(credentials.password, MINHA_SENHA)
@@ -64,7 +93,7 @@ class Livro(BaseModel):
 
 
 @app.post("/adiciona")
-def post_livros(livro: Livro, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
+async def post_livros(livro: Livro, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
     db_livro = db.query(LivroDB).filter(
         LivroDB.nome_livro == livro.nome_livro,
         LivroDB.autor_livro == livro.autor_livro
@@ -81,7 +110,7 @@ def post_livros(livro: Livro, db: Session = Depends(sessao_db), usuario: str = D
 
 
 @app.put("/atualiza/{id_livro}")
-def put_livros(id_livro: int, livro: Livro, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
+async def put_livros(id_livro: int, livro: Livro, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
     
     db_livro = db.query(LivroDB).filter(LivroDB.id == id_livro).first()
     if not db_livro:
@@ -96,7 +125,7 @@ def put_livros(id_livro: int, livro: Livro, db: Session = Depends(sessao_db), us
 
 
 @app.delete("/delete/{id_livro}")
-def delete_livros(id_livro: int, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
+async def delete_livros(id_livro: int, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
     db_livro = db.query(LivroDB).filter(LivroDB.id == id_livro).first()
     if not db_livro:
         raise HTTPException(status_code=404, detail="Livro nao encontrado")
@@ -106,7 +135,7 @@ def delete_livros(id_livro: int, db: Session = Depends(sessao_db), usuario: str 
 
 
 @app.get("/livros")
-def get_livros(
+async def get_livros(
     order_by: str = "id",       
     order_dir: str = "asc",
     page: int = 1,
