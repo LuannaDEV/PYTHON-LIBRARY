@@ -43,16 +43,16 @@ async def chamadas_externas3():
 
 @app.get("/chamadas-externas")
 async def chamadas():
-    tarefa1 = asyncio.create_task(chamadas_externas1)
-    tarefa2 = asyncio.create_task(chamadas_externas2)
-    tarefa3 = asyncio.create_task(chamadas_externas3)
+    tarefa1 = asyncio.create_task(chamadas_externas1())
+    tarefa2 = asyncio.create_task(chamadas_externas2())
+    tarefa3 = asyncio.create_task(chamadas_externas3())
     
     resultado1 = await tarefa1
     resultado2 = await tarefa2
     resultado3 = await tarefa3
     
     return {
-        "mensagem": "Todas as chamadas nas APIS foram concluidas com sucesso"
+        "mensagem": "Todas as chamadas nas APIS foram concluidas com sucesso", 
         "resultado": [resultado1, resultado2, resultado3]
         
     }
@@ -92,7 +92,7 @@ class Livro(BaseModel):
     ano_livro: int
 
 
-@app.post("/adiciona")
+@app.post("/livros")
 async def post_livros(livro: Livro, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
     db_livro = db.query(LivroDB).filter(
         LivroDB.nome_livro == livro.nome_livro,
@@ -109,7 +109,7 @@ async def post_livros(livro: Livro, db: Session = Depends(sessao_db), usuario: s
     return {"mensagem": f"O livro foi criado com sucesso pelo usuario '{usuario}'!"}
 
 
-@app.put("/atualiza/{id_livro}")
+@app.put("/livros/{id_livro}")
 async def put_livros(id_livro: int, livro: Livro, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
     
     db_livro = db.query(LivroDB).filter(LivroDB.id == id_livro).first()
@@ -124,7 +124,7 @@ async def put_livros(id_livro: int, livro: Livro, db: Session = Depends(sessao_d
     return {"mensagem": f"O livro foi atualizado com sucesso pelo usuario '{usuario}'!"}
 
 
-@app.delete("/delete/{id_livro}")
+@app.delete("/livros/{id_livro}")
 async def delete_livros(id_livro: int, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
     db_livro = db.query(LivroDB).filter(LivroDB.id == id_livro).first()
     if not db_livro:

@@ -28,10 +28,10 @@ A partir da imagem criada, o Docker sobe o container e executa a aplicação na 
 
 ```
 Cliente
-  │  POST /adiciona
-  │  GET /livros
-  │  PUT /atualiza/{id}
-  │  DELETE /delete/{id}
+  │  POST /adiciona(/livros)
+  │  GET /livros(/livros)
+  │  PUT /atualiza/{id}(/livros)
+  │  DELETE /delete/{id}(/livros)
   │  (HTTP Basic Auth + body JSON)
   │
   ▼
@@ -190,4 +190,7 @@ Todos os endpoints exigem **HTTP Basic Auth**:
 
 ```bash
 docker compose down
+
+PARA TESTAR A API: 
+Invoke-WebRequest -Uri http://localhost:8000/chamadas-externas | Select-Object -ExpandProperty Content
 ```
