@@ -82,10 +82,22 @@ class LivroDB(Base):
 Base.metadata.create_all(bind=engine)
 
 
-def salvar_livro_redis(livro_id: int, livro: Livro):
-    redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()))
+async def salvar_livro_redis(livro_id: int, livro: Livro):
+    ttl  = redis_client.ttl(f"livro:{livro_id}")
     
-def deletar_livro_redis(livro_id: int):
+    if ttl > 0:
+        redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=ttl)
+    else:
+        redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=30)
+      
+    
+
+    
+    
+    
+    
+    
+async def deletar_livro_redis(livro_id: int):
     redis_client.delete(f"livro:{livro_id}")
     
 
@@ -206,6 +218,9 @@ async def get_livros(  livro: Livro,
     } 
         
     redis_client.setex(cache_key, 30, json.dumps(resposta)) 
+    
+    
+    
         
 
     
