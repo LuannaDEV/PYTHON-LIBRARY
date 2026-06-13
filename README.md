@@ -193,4 +193,12 @@ docker compose down
 
 PARA TESTAR A API: 
 Invoke-WebRequest -Uri http://localhost:8000/chamadas-externas | Select-Object -ExpandProperty Content
+
+ADICIONANDO O REDIS:
+
+poetry shell-> poetry add redis
+import redis-> import json
+
+REDIS -> PARA INICIAR O REDIS, ABRIR O TERMINAL UBUNTU E DIGITAR sudo service redis-server start, para verificar se o 
+servico esta funcionando, digitar ->redis-cli ping (a resposta deve ser PONG)
 ```

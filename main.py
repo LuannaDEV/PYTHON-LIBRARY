@@ -6,6 +6,10 @@ from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy import create_engine, Column, Integer, String, asc, desc
 import os
 import asyncio
+import redis
+import json
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_response=True)
 
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -78,6 +82,14 @@ class LivroDB(Base):
 Base.metadata.create_all(bind=engine)
 
 
+def salvar_livro_redis(livro_id: int, livro: Livro):
+    redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()))
+    
+def deletar_livro_redis(livro_id: int):
+    redis_client.delete(f"livro:{livro_id}")
+    
+
+
 def sessao_db():
     db = SessionLocal()
     try:
@@ -91,6 +103,17 @@ class Livro(BaseModel):
     autor_livro: str
     ano_livro: int
 
+@app.get("/debug/redis")
+def livros_redis():
+    chaves = redis_client.keys("livros:*") #pega o nome das chaves, ex: livro2, livro2, livro3
+    livros = []
+    for chave in chaves:
+        valor = redis_client.get(chave) #pega o valor da chave, nao o nome da chave, e coloca em valor
+        ttl = redis.client.ttl(chave)
+        
+        
+        livros.append({"chave":chave, "valor": json.loads(valor), "ttl": ttl}) 
+    return livros
 
 @app.post("/livros")
 async def post_livros(livro: Livro, db: Session = Depends(sessao_db), usuario: str = Depends(autenticar_meu_usuario)):
@@ -105,6 +128,7 @@ async def post_livros(livro: Livro, db: Session = Depends(sessao_db), usuario: s
     db.add(novo_livro)
     db.commit()
     db.refresh(novo_livro)
+    salvar_livro_redis(novo_livro.id, livro)
 
     return {"mensagem": f"O livro foi criado com sucesso pelo usuario '{usuario}'!"}
 
@@ -131,50 +155,57 @@ async def delete_livros(id_livro: int, db: Session = Depends(sessao_db), usuario
         raise HTTPException(status_code=404, detail="Livro nao encontrado")
     db.delete(db_livro)
     db.commit()
+    deletar_livro_redis(id_livro)
     return {"mensagem": f"Livro deletado com sucesso pelo usuario '{usuario}'"}
 
 
 @app.get("/livros")
-async def get_livros(
+async def get_livros(  livro: Livro,
     order_by: str = "id",       
     order_dir: str = "asc",
     page: int = 1,
     limit: int = 10,
     db: Session = Depends(sessao_db),
     usuario: str = Depends(autenticar_meu_usuario)
+    
 ):
+   
+   
+    
     if page < 1 or limit < 1:
-        raise HTTPException(status_code=400, detail="Page ou limit invalidos!")
+            raise HTTPException(status_code=400, detail="Page ou limit invalidos!")
 
-    campos_validos = {"id", "nome_livro", "autor_livro", "ano_livro"}
-    if order_by not in campos_validos:
-        raise HTTPException(status_code=400, detail="Campo de ordenacao invalido!")
+    cache_key = f"livros:page={page}&limit={limit}"
+    cached = redis_client.get(cache_key) 
+        
+    if cached:
+        return json.loads(cached)
+    
+    livros = db.query(LivroDB).offset((page - 1) * limit).limit(limit).all()
 
-    if order_dir not in ("asc", "desc"):
-        raise HTTPException(status_code=400, detail="order_dir invalido! Use 'asc' ou 'desc'.")
-
-    coluna = getattr(LivroDB, order_by)
-    direcao = asc if order_dir == "asc" else desc
-
-    livros = db.query(LivroDB).order_by(direcao(coluna)).offset((page - 1) * limit).limit(limit).all()
-
-    if not livros:
-        return {"mensagem": "Nao existe nenhum livro!"}
-
+    if not livros: 
+            return {"mensagem": "Nao existe nenhum livro!"}
+        
     total_livros = db.query(LivroDB).count()
-
-    return {
-        "usuario": usuario,
+        
+    resposta ={
+        
         "page": page,
-        "limit": limit,
-        "total": total_livros,
+        "limit":limit,
+        "total_livros": total_livros,
         "livros": [
             {
-                "id": livro.id,
+            "id": livro.id,
                 "nome_livro": livro.nome_livro,
                 "autor_livro": livro.autor_livro,
                 "ano_livro": livro.ano_livro
-            }
-            for livro in livros
-        ]
-    }
+            
+            
+        } for livro in livros
+                    ]
+    } 
+        
+    redis_client.setex(cache_key, 30, json.dumps(resposta)) 
+        
+
+    
