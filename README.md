@@ -200,5 +200,8 @@ poetry shell-> poetry add redis
 import redis-> import json
 
 REDIS -> PARA INICIAR O REDIS, ABRIR O TERMINAL UBUNTU E DIGITAR sudo service redis-server start, para verificar se o 
-servico esta funcionando, digitar ->redis-cli ping (a resposta deve ser PONG)
+servico esta funcionando, digitar ->redis-cli ping (a resposta deve ser PONG) OU:
+SUBIR O CONTAINER, E DIGITAR podman exec -it livros-redis redis-cli ping APOS (DEVE RESPONDER PONG)
+
+
 ```
