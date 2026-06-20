@@ -8,8 +8,12 @@ import os
 import asyncio
 import redis
 import json
+from tasks import fatorial, somar
+from celery_app import celery_app
+from celery.result import AsyncResult
 
-redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_response=True)
+
+redis_client = redis.Redis(host='redis', port=6379, db=0, decode_response=True)
 
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -83,12 +87,12 @@ Base.metadata.create_all(bind=engine)
 
 
 async def salvar_livro_redis(livro_id: int, livro: Livro):
-    ttl  = redis_client.ttl(f"livro:{livro_id}")
+    ttl  = await redis_client.ttl(f"livro:{livro_id}")
     
     if ttl > 0:
-        redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=ttl)
+        await redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=ttl)
     else:
-        redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=30)
+        await redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=30)
       
     
 
@@ -98,7 +102,7 @@ async def salvar_livro_redis(livro_id: int, livro: Livro):
     
     
 async def deletar_livro_redis(livro_id: int):
-    redis_client.delete(f"livro:{livro_id}")
+    await redis_client.delete(f"livro:{livro_id}")
     
 
 
@@ -114,6 +118,23 @@ class Livro(BaseModel):
     nome_livro: str
     autor_livro: str
     ano_livro: int
+
+
+@app.post("/calcular/soma")
+def calcular_soma(a: int, b: int):
+    tarefa = somar.delay(a,b)
+    return {"task_id": tarefa.id,
+            "message": "Tarefa de soma enviada para execucao"}
+
+
+@app.post("/calcular/fatorial")
+def calcular_fatorial(n: int):
+    tarefa = fatorial.delay(n)
+    return {
+        "task_id": tarefa.id,
+        "message": "Tarefa de fatorial enviada para execucao!"
+    }
+    
 
 @app.get("/debug/redis")
 def livros_redis():
@@ -172,14 +193,12 @@ async def delete_livros(id_livro: int, db: Session = Depends(sessao_db), usuario
 
 
 @app.get("/livros")
-async def get_livros(  livro: Livro,
-    order_by: str = "id",       
-    order_dir: str = "asc",
+async def get_livros( 
+    
     page: int = 1,
     limit: int = 10,
     db: Session = Depends(sessao_db),
-    usuario: str = Depends(autenticar_meu_usuario)
-    
+   
 ):
    
    

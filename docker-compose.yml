@@ -43,3 +43,17 @@ volumes:
 networks:
   livros_net:
     driver: bridge
+
+redis:
+  image: redis:7-alpine
+  container_name: livros:redis
+    - ports:"6379:6379"
+
+celery:
+  build: .
+  container-name: livros-celery
+  command: ["poetry", "run", "celery", "-A", "celery_app:celery_app", "worker", "-Q", "livros", "--loglevel=info"]
+  volumes:
+    - .:/app
+  depends_on:
+    - redis
