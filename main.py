@@ -13,10 +13,7 @@ from celery_app import celery_app
 from celery.result import AsyncResult
 
 
-redis_client = redis.Redis(host='redis', port=6379, db=0, decode_response=True)
-
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -86,24 +83,6 @@ class LivroDB(Base):
 Base.metadata.create_all(bind=engine)
 
 
-async def salvar_livro_redis(livro_id: int, livro: Livro):
-    ttl  = await redis_client.ttl(f"livro:{livro_id}")
-    
-    if ttl > 0:
-        await redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=ttl)
-    else:
-        await redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=30)
-      
-    
-
-    
-    
-    
-    
-    
-async def deletar_livro_redis(livro_id: int):
-    await redis_client.delete(f"livro:{livro_id}")
-    
 
 
 def sessao_db():
@@ -134,6 +113,26 @@ def calcular_fatorial(n: int):
         "task_id": tarefa.id,
         "message": "Tarefa de fatorial enviada para execucao!"
     }
+    
+async def salvar_livro_redis(livro_id: int, livro: Livro):
+    ttl  = await redis_client.ttl(f"livro:{livro_id}")
+    
+    if ttl > 0:
+        await redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=ttl)
+    else:
+        await redis_client.set(f"livro:{livro_id}", json.dumps(livro.dict()), ex=30)
+      
+    
+
+    
+    
+    
+    
+    
+async def deletar_livro_redis(livro_id: int):
+    redis_client.delete(f"livro:{livro_id}")
+    
+   
     
 
 @app.get("/debug/redis")
@@ -237,6 +236,7 @@ async def get_livros(
     } 
         
     redis_client.setex(cache_key, 30, json.dumps(resposta)) 
+    return resposta
     
     
     

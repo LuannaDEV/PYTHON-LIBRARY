@@ -10,6 +10,8 @@ services:
       - livros_data:/app/data
     networks:
       - livros_net
+    depends_on:
+      - redis
     deploy:
       resources:
         limits:
@@ -36,6 +38,25 @@ services:
           cpus: '0.25'
           memory: 128M
 
+  redis:
+    image: redis:7-alpine
+    container_name: livros-redis
+    ports:
+      - '6379:6379'
+    networks:
+      - livros_net
+
+  celery:
+    build: .
+    container_name: livros-celery
+    command: ["poetry", "run", "celery", "-A", "celery_app:celery_app", "worker", "-Q", "livros", "--loglevel=info"]
+    volumes:
+      - .:/app
+    networks:
+      - livros_net
+    depends_on:
+      - redis
+
 volumes:
   livros_data:
     driver: local
@@ -43,17 +64,3 @@ volumes:
 networks:
   livros_net:
     driver: bridge
-
-redis:
-  image: redis:7-alpine
-  container_name: livros:redis
-    - ports:"6379:6379"
-
-celery:
-  build: .
-  container-name: livros-celery
-  command: ["poetry", "run", "celery", "-A", "celery_app:celery_app", "worker", "-Q", "livros", "--loglevel=info"]
-  volumes:
-    - .:/app
-  depends_on:
-    - redis

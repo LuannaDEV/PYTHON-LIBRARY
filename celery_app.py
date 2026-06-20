@@ -7,11 +7,10 @@ celery_app = Celery("tarefa_livros", broker="redis://redis:6379/0",
                     )
 
 celery_app.conf.update(
-    task_track_started=True
+    task_track_started=True,
     result_expires=3600,
     result_persistent=True,
     task_serializer="json",
-    result_serialize="json",
-    accept_content=["json"]
-    
+    result_serializer="json",
+    accept_content=["json"],
 )
