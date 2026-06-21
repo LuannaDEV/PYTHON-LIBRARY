@@ -1,8 +1,13 @@
 from celery import Celery
+import os
 
-celery_app = Celery("tarefa_livros", broker="redis://redis:6379/0",
-                    backend="redis://redis:6379/0",
-                    include-["tasks"],
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+REDIS_URL = os.getenv("REDIS_URL", f"redis://{REDIS_HOST}:{REDIS_PORT}/0")
+
+celery_app = Celery("tarefa_livros", broker=REDIS_URL,
+                    backend=REDIS_URL,
+                    include=["tasks"],
                     
             
                     
@@ -17,3 +22,7 @@ celery_app.conf.update(
     result_serializer="json",
     accept_content=["json"],
 )
+
+
+
+

@@ -13,10 +13,11 @@ from celery_app import celery_app
 from dotenv import load_dotenv
 import redis.asyncio as redis
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")from celery.result import AsyncResult
-  
 
-redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
+DATABASE_URL = os.getenv("DATABASE_URL") 
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
