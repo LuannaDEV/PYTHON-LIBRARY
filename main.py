@@ -10,14 +10,22 @@ import redis
 import json
 from tasks import fatorial, somar
 from celery_app import celery_app
-from celery.result import AsyncResult
-
+from dotenv import load_dotenv
+import redis.asyncio as redis
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")from celery.result import AsyncResult
+  
 
 redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+
+
+
+
 
 app = FastAPI(
     title="API de livros.",
@@ -130,14 +138,14 @@ async def salvar_livro_redis(livro_id: int, livro: Livro):
     
     
 async def deletar_livro_redis(livro_id: int):
-    redis_client.delete(f"livro:{livro_id}")
+   await redis_client.delete(f"livro:{livro_id}")
     
    
     
 
 @app.get("/debug/redis")
 def livros_redis():
-    chaves = redis_client.keys("livros:*") #pega o nome das chaves, ex: livro2, livro2, livro3
+    chaves = redis_client.keys("livro:*") #pega o nome das chaves, ex: livro2, livro2, livro3
     livros = []
     for chave in chaves:
         valor = redis_client.get(chave) #pega o valor da chave, nao o nome da chave, e coloca em valor
